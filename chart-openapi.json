@@ -159,7 +159,7 @@
               "violin",
               "word-cloud"
             ],
-            "description": "图表类型（已移除地图类等暂不支持）"
+            "description": "图表类型（地图类等暂不支持）"
           },
           "data": {
             "type": "array",
