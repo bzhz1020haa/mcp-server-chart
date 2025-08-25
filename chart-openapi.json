@@ -5,28 +5,7 @@
     "version": "1.0.0",
     "description": "集成真实LLM模型的图表渲染MCP服务API。支持Qwen、Claude、OpenAI等多种LLM提供商，通过MCP协议实现智能图表生成和渲染。"
   },
-  "servers": [
-    {
-      "url": "http://localhost:3000",
-      "description": "本地部署的图表渲染服务（POST /gpt-vis）"
-    },
-    {
-      "url": "http://localhost:8021/v1",
-      "description": "本地Qwen模型服务"
-    },
-    {
-      "url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
-      "description": "阿里云Qwen模型服务"
-    },
-    {
-      "url": "https://api.anthropic.com/v1",
-      "description": "Anthropic Claude模型服务"
-    },
-    {
-      "url": "https://api.openai.com/v1",
-      "description": "OpenAI模型服务"
-    }
-  ],
+
   "paths": {
     "/gpt-vis": {
       "post": {
@@ -159,7 +138,7 @@
               "violin",
               "word-cloud"
             ],
-            "description": "图表类型（地图类等暂不支持）"
+            "description": "图表类型（已移除地图类等暂不支持）"
           },
           "data": {
             "type": "array",
