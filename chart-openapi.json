@@ -1,0 +1,224 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "AntV MCP Chart Render API with LLM Integration",
+    "version": "1.0.0",
+    "description": "集成真实LLM模型的图表渲染MCP服务API。支持Qwen、Claude、OpenAI等多种LLM提供商，通过MCP协议实现智能图表生成和渲染。"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "本地部署的图表渲染服务（POST /gpt-vis）"
+    },
+    {
+      "url": "http://localhost:8021/v1",
+      "description": "本地Qwen模型服务"
+    },
+    {
+      "url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+      "description": "阿里云Qwen模型服务"
+    },
+    {
+      "url": "https://api.anthropic.com/v1",
+      "description": "Anthropic Claude模型服务"
+    },
+    {
+      "url": "https://api.openai.com/v1",
+      "description": "OpenAI模型服务"
+    }
+  ],
+  "paths": {
+    "/gpt-vis": {
+      "post": {
+        "summary": "渲染图表（MCP 转发调用接口）",
+        "description": "接收类型与数据参数，渲染图表。支持多种LLM模型通过MCP协议调用：\n- 调用方式：POST\n- 返回结构：{ success, resultObj, errorMessage, llm_provider, processing_time }\n- 支持的LLM：Qwen本地/云端、Claude、OpenAI",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenderRequest"
+              },
+              "examples": {
+                "barChart": {
+                  "summary": "柱状图示例",
+                  "value": {
+                    "type": "bar",
+                    "data": [
+                      { "category": "A", "value": 10 },
+                      { "category": "B", "value": 20 }
+                    ],
+                    "llm_provider": "qwen_local"
+                  }
+                },
+                "lineChart": {
+                  "summary": "折线图示例",
+                  "value": {
+                    "type": "line",
+                    "data": [
+                      { "time": "2025-05", "value": 512 },
+                      { "time": "2025-06", "value": 1024 }
+                    ],
+                    "llm_provider": "claude"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "渲染服务响应",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RenderResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "渲染成功",
+                    "value": {
+                      "success": true,
+                      "resultObj": "https://cdn.example.com/chart123.png",
+                      "llm_provider": "qwen_local",
+                      "processing_time": 1.2
+                    }
+                  },
+                  "failure": {
+                    "summary": "渲染失败",
+                    "value": {
+                      "success": false,
+                      "errorMessage": "INVALID_CHART_TYPE: type 'foo' not supported",
+                      "llm_provider": "claude"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RenderResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "服务健康检查",
+        "responses": {
+          "200": {
+            "description": "服务正常",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                },
+                "examples": {
+                  "ok": {
+                    "value": { "status": "ok", "version": "1.0.0" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RenderRequest": {
+        "type": "object",
+        "required": ["type", "data"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "area",
+              "bar",
+              "boxplot",
+              "column",
+              "dual-axes",
+              "funnel",
+              "histogram",
+              "line",
+              "liquid",
+              "pie",
+              "radar",
+              "sankey",
+              "scatter",
+              "treemap",
+              "venn",
+              "violin",
+              "word-cloud"
+            ],
+            "description": "图表类型（已移除地图类等暂不支持）"
+          },
+          "data": {
+            "type": "array",
+            "items": { "type": "object" },
+            "description": "图表数据"
+          },
+          "encode": {
+            "type": "object",
+            "description": "编码规则（x, y, color…）",
+            "additionalProperties": true
+          },
+          "options": {
+            "type": "object",
+            "description": "渲染选项（可选）",
+            "additionalProperties": true
+          },
+          "llm_provider": {
+            "type": "string",
+            "enum": ["qwen_local", "qwen_cloud", "claude", "openai"],
+            "description": "指定使用的LLM提供商",
+            "default": "qwen_local"
+          }
+        }
+      },
+      "RenderResponse": {
+        "type": "object",
+        "required": ["success"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "渲染是否成功"
+          },
+          "resultObj": {
+            "type": "string",
+            "nullable": true,
+            "description": "成功时返回图表 URL"
+          },
+          "errorMessage": {
+            "type": "string",
+            "nullable": true,
+            "description": "发生错误时返回的错误信息"
+          },
+          "llm_provider": {
+            "type": "string",
+            "description": "使用的LLM提供商"
+          },
+          "processing_time": {
+            "type": "number",
+            "description": "处理时间（秒）"
+          }
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string" },
+          "version": { "type": "string" }
+        }
+      }
+    }
+  }
+}
